@@ -55,11 +55,14 @@ var requestHandler = function(request, response) {
   // which includes the status and all headers.
   // response.writeHead(statusCode, headers);
 
-  if (request.method === 'GET' && request.url === '/classes/messages') {
+  if (request.method === 'GET' && request.url.includes('/classes/messages')) {
     var statusCode = 200;
     response.writeHead(statusCode, headers);
     response.end(JSON.stringify(obj));
-  } else if (request.method === 'POST' && request.url === '/classes/messages') {
+  } else if (
+    request.method === 'POST' &&
+    request.url.includes('/classes/messages')
+  ) {
     var messages = [];
 
     request
@@ -75,7 +78,7 @@ var requestHandler = function(request, response) {
       });
   } else if (
     request.method === 'OPTIONS' &&
-    request.url === '/classes/messages'
+    request.url.includes('/classes/messages')
   ) {
     var statusCode = 200;
     response.writeHead(statusCode, headers);
