@@ -11,6 +11,8 @@ this file and include it in basic-server.js so that it actually works.
 *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
 
 **************************************************************/
+const fs = require('fs');
+
 var defaultCorsHeaders = {
   'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -18,7 +20,7 @@ var defaultCorsHeaders = {
   'access-control-max-age': 10, // Seconds.
 };
 
-var obj = { results: [] };
+var messages;
 
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
@@ -55,26 +57,55 @@ var requestHandler = function(request, response) {
   // which includes the status and all headers.
   // response.writeHead(statusCode, headers);
 
+  // if (request.url === '/index') {
+  //   fs.readFile('/client/index.html', function(err, data) {
+  //     response.writeHead(200, { 'Content-Type': 'text/html' });
+  //     response.write(data);
+  //     response.end();
+  //   });
+  // }
+
   if (request.method === 'GET' && request.url.includes('/classes/messages')) {
     var statusCode = 200;
     response.writeHead(statusCode, headers);
-    response.end(JSON.stringify(obj));
+    fs.readFile('./server/data.json', (err, data) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
+      storage = JSON.parse(data);
+      response.end(JSON.stringify(storage));
+    });
   } else if (
     request.method === 'POST' &&
     request.url.includes('/classes/messages')
   ) {
-    var messages = [];
-
     request
       .on('data', chunk => {
         messages.push(chunk);
+        messages = Buffer.concat(messages).toString();
       })
       .on('end', () => {
-        messages = Buffer.concat(messages).toString();
         var statusCode = 201;
         response.writeHead(statusCode, headers);
-        response.end(JSON.stringify(obj));
-        obj.results.push(JSON.parse(messages));
+
+        fs.readFile('./server/data.json', (err, data) => {
+          if (err) {
+            console.error(err);
+            return;
+          }
+          storage = JSON.parse(data);
+          message = JSON.parse(messages);
+          response.end(JSON.stringify(storage));
+          storage.results.push(message);
+
+          fs.writeFile('./server/data.json', JSON.stringify(storage), err => {
+            if (err) {
+              console.error(err);
+              return;
+            }
+          });
+        });
       });
   } else if (
     request.method === 'OPTIONS' &&
